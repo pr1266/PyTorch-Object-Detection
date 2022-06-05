@@ -1,12 +1,12 @@
 import torch
-import torch.nn as nn
 import numpy as np
-import matplotlib.pyplot as plt
-
+"""
+in code ro kolan ba numpy ham mishe zad
+"""
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(device)
 
-def intersection_over_union(boxes_preds, boxes_labels, box_format='midpoint'):
+def intersection_over_union(boxes_preds, boxes_labels, box_format='corners'):
     
     #! box format haro joda mikonim:
     if box_format == 'midpoint':
