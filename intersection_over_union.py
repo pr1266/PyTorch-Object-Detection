@@ -3,11 +3,13 @@ import numpy as np
 """
 in code ro kolan ba numpy ham mishe zad
 """
+#TODO: intersection over union ye metric baraye arzyabi
+#TODO: 2 ta bounding box ke cheghad ba ham eshterak daran
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(device)
 
 def intersection_over_union(boxes_preds, boxes_labels, box_format='corners'):
-    
+
     #! box format haro joda mikonim:
     if box_format == 'midpoint':
         box1_x1 = boxes_preds[..., 0:1] - boxes_preds[..., 2:3] / 2

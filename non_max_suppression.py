@@ -11,7 +11,6 @@ from intersection_over_union import intersection_over_union
 #TODO: and remove all other boxes with IoU > threshold
 #TODO: do this for all classes!
 
-
 def nms(bboxes, iou_threshold, threshold, box_format='corners'):
     
     #! prediction chie? prediction = [[class1, prob of class1, x1, y1, x2, y2], [same as first one], [same as first one]]
