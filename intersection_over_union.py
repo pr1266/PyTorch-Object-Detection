@@ -30,11 +30,11 @@ def intersection_over_union(boxes_preds, boxes_labels, box_format='midpoint'):
         box1_y2 = boxes_preds[..., 3:4]
 
         #TODO inja baraye box2
-        box2_x1 = boxes_preds[..., 0:1]
-        box2_y1 = boxes_preds[..., 1:2]
+        box2_x1 = boxes_labels[..., 0:1]
+        box2_y1 = boxes_labels[..., 1:2]
 
-        box2_x2 = boxes_preds[..., 2:3]
-        box2_y2 = boxes_preds[..., 3:4]
+        box2_x2 = boxes_labels[..., 2:3]
+        box2_y2 = boxes_labels[..., 3:4]
 
     #! inja max haro dar miarim:
     x1 = torch.max(box1_x1, box2_x1)
