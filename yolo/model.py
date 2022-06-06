@@ -30,3 +30,20 @@ architecture_config = [
     (3, 1024, 1, 1),
     (3, 1024, 1, 1),
 ]
+
+class CnnBlock(nn.Module):
+
+    def __init__(self, in_channels, out_channels, **kwargs):
+
+        super(CnnBlock, self).__init__()
+        self.conv = nn.Conv2d(in_channels, out_channels, bias=False, **kwargs)
+        self.batch_norm = nn.BatchNorm2d(out_channels)
+        self.leaky_relu = nn.LeakyReLU(0.1)
+
+    def forward(self, x):
+
+        out = self.conv(x)
+        out = self.batch_norm(out)
+        out = self.leaky_relu(out)
+        return out
+
