@@ -34,7 +34,7 @@ def mean_average_precision(pred_boxes, true_boxes, iou_th=0.5, box_format='corne
         #! inja confusion matrix ro tashkil midim:
         TP = torch.zeros(len(detections))
         FP = torch.zeros(len(detections))
-        total_true_boxes = len(ground_truths)
+        total_true_bboxes = len(ground_truths)
 
         for detection_idx, detection in enumerate(detections):
             ground_truth_img = [bbox for bbox in ground_truths if bbox[0] == detection[0]]
@@ -48,3 +48,29 @@ def mean_average_precision(pred_boxes, true_boxes, iou_th=0.5, box_format='corne
                     torch.tensor(gt[3:]),
                     box_format=box_format,
                 )
+
+                if iou > best_iou:
+                    best_iou = iou
+                    best_gt_idx = idx
+
+            if best_iou > iou_th:
+                if amount_bboxes[detection[0]][best_gt_idx] == 0:
+                    TP[detection_idx] = 1
+                    amount_bboxes[detection[0]][best_gt_idx] = 1
+                else:
+                    FP[detection_idx] = 1
+
+            else:
+                FP[detection_idx] = 1
+        
+        TP_cumsum = torch.cumsum(TP, dim=0)
+        FP_cumsum = torch.cumsum(FP, dim=0)
+        recalls = TP_cumsum / (total_true_bboxes + epsilon)
+        precisions = TP_cumsum / (TP_cumsum + FP_cumsum + epsilon)
+        precisions = torch.cat((torch.tensor([1]), precisions))
+        recalls = torch.cat((torch.tensor([0]), recalls))
+        #! sath e zir e nemoodar precision-recall ro integral migirim:
+        average_precisions.append(torch.trapz(precisions, recalls))
+
+    return sum(average_precisions) / len(average_precisions)
+                    
