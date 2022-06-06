@@ -1,8 +1,26 @@
 import torch
 from collections import Counter
 from intersection_over_union import intersection_over_union
-import numpy as np
-
+"""
+khob ye hint molaii biam baratoon
+tooye mean average precision aval miaim
+hame bounding box 'predictions' ro rooye test set be dast miarim
+baad ground truth haro ham darim dige label zadim
+baad tooye in bounding box ha miaim TP va FP ro hesab mikonim
+in chetor anjam mishe?
+ahaaaaaaaaa
+miaim iou ground truth va prediction box ro bedast miarim
+age iou bishtar az threshol bashe FP tashkhis midim
+yani:
+1 - ya kolan object nadarim
+2 - bounding boxemoon dorost predict nashode 
+va masalan nesf e object ro dare localize mikone
+vaghti TP va FP ha moshakhas shod, miaim va graph
+precision-recall ro rasm mikonim va sath zir e nemoodar ro
+hesab mikonim dar vaghea integral migirim
+va baraye hame class ha inkaro mikonim va average migirim
+ta score mean average precision be dast biad
+"""
 def mean_average_precision(pred_boxes, true_boxes, iou_th=0.5, box_format='corners', num_classes=20):
 
     #! pred box list e mesle hint haye code haye ghabli
@@ -21,6 +39,9 @@ def mean_average_precision(pred_boxes, true_boxes, iou_th=0.5, box_format='corne
         for true_box in true_boxes:
             if true_box[1] == c:
                 ground_truths.append(true_box)
+        #TODO arzam be khedmatetoon ke
+        #TODO ta injaye kar rooye class haye mokhtalef
+        #TODO iterate kardim va detection ha va GT haro daravordim
 
         #! avalin parameter pred train_idx e
         #! tooye khat zir, ye dictionary darim az in ke img key chand
@@ -30,8 +51,11 @@ def mean_average_precision(pred_boxes, true_boxes, iou_th=0.5, box_format='corne
         for key, val in amount_bboxes.items():
             amount_bboxes[key] = torch.zeros(val)
 
+        #! inja detection haro bar asas e confidence level sort mikonim
         detections.sort(key=lambda x: x[2], reverse=True)
         #! inja confusion matrix ro tashkil midim:
+        #! 2 ta tensor zero tashkil midim baadan process mikonim
+        #! ke kodoom element ha bayad 1 bashan        
         TP = torch.zeros(len(detections))
         FP = torch.zeros(len(detections))
         total_true_bboxes = len(ground_truths)
@@ -41,25 +65,26 @@ def mean_average_precision(pred_boxes, true_boxes, iou_th=0.5, box_format='corne
 
             num_gts = len(ground_truth_img)
             best_iou = 0
-
+            #! hala behtarin anchor box ro dar miarim:
             for idx, gt in enumerate(ground_truth_img):
                 iou = intersection_over_union(
                     torch.tensor(detection[3:]),
                     torch.tensor(gt[3:]),
                     box_format=box_format,
                 )
-
+                
                 if iou > best_iou:
                     best_iou = iou
                     best_gt_idx = idx
 
+            #! inja check mikonim ke bar asas e iou threshold
+            #! bbox predict shode TP hast ya na
             if best_iou > iou_th:
                 if amount_bboxes[detection[0]][best_gt_idx] == 0:
                     TP[detection_idx] = 1
                     amount_bboxes[detection[0]][best_gt_idx] = 1
                 else:
                     FP[detection_idx] = 1
-
             else:
                 FP[detection_idx] = 1
         
