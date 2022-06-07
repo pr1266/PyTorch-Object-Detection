@@ -44,3 +44,20 @@ def Compose(object):
             img, bboxes = t(img), bboxes
         
         return img, bboxes
+
+
+def train_fn(train_loader, model, optimizer, loss_fn):
+    loop = tqdm(train_loader, level=True)
+    mean_loss = []
+    for batch_idx, (x, y) in enumerate(loop):
+        x = x.to(DEVICE)
+        y = y.to(DEVICE)
+        out = model(x)
+        loss = loss_fn(out, y)
+        mean_loss.append(loss.item())
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        #! inja progress bar ro update mikonim:
+        loop.set_postfix(loss=loss.item())
