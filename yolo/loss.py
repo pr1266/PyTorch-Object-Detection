@@ -1,3 +1,4 @@
+from genericpath import exists
 from bs4 import Tag
 import torch
 import torch.nn as nn
@@ -51,6 +52,17 @@ class YoloLoss(nn.Module):
         )
 
         #! no object loss
-
+        no_object_loss = self.mse(
+            torch.flatten((1 - exists_box) * predictions[..., 20:21], start_dim=1),
+            torch.flatten((1 - exists_box) * target[..., 20:21], start_dim=1)
+        )
+        
+        no_object_loss += self.mse(
+            torch.flatten((1 - exists_box) * predictions[..., 25:26], start_dim=1),
+            torch.flatten((1 - exists_box) * target[..., 20:21], start_dim=1)
+        )
 
         #! class loss
+
+
+
