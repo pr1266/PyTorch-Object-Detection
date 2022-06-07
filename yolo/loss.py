@@ -18,4 +18,29 @@ class YoloLoss(nn.Module):
         iou_b1 = intersection_over_union(predictions[..., 21:25], target[..., 21:25])
         iou_b1 = intersection_over_union(predictions[..., 26:30], target[..., 21:25])
         ious = torch.cat([iou_b1.unsqueeze(0), iou_b2.unsqueeze(0)], dim=0)
-        iou_maxes, bestbox = torch.max(ious, dim=0)
+        iou_maxes, best_box = torch.max(ious, dim=0)
+        exists_box = target[..., 20].unsqueeze(3) #identity of object i
+
+        #! box coordinates:
+        box_predictions = exists_box * (
+            (best_box * predictions[..., 26:30] + (1 - bestbox) * predictions[..., 21:25])
+        )
+
+        box_targets = exists_box * target[..., 21:25]
+        box_predictions[..., 2:4] = torch.sign(box_predictions[..., 2:4]) * torch.sqrt(
+            torch.abs(box_predictions[..., 2:4] + 1e-6)
+        )
+        
+        box_targets[..., 2:4] = torch.sqrt(box_targets[..., 2:4])
+
+        box_loss = self.mse(
+            torch.flatten(box_predictions, end_dim=-2),
+            torch.flatten(box_targets, end_dim=-2),
+        )
+        #! object loss
+
+
+        #! no object loss
+
+
+        #! class loss
