@@ -1,4 +1,5 @@
 from cProfile import label
+from xml.etree.ElementTree import PI
 from pyrsistent import T
 import torch
 import torch.optim as optim
@@ -87,3 +88,23 @@ def main():
         img_dir=IMG_DIR,
         label_dir=LABEL_DIR
     )
+
+    train_loader = DataLoader(dataset=train_dataset, batch_size=BATCH_SIZE, num_workers=NUM_WORKERS, pin_memory=PIN_MEMORY, shuffle=True, drop_last=False)
+    test_loader = DataLoader(dataset=test_dataset, batch_size=BATCH_SIZE, num_workers=NUM_WORKERS, pin_memory=PIN_MEMORY, shuffle=True, drop_last=False)
+
+    for epoch in range(EPOCHS):
+        
+        pred_boxes, target_boxes = get_bboxes(
+            train_loader, model, iou_threshold=0.4, threshold=0.4
+        )
+        
+        mean_avg_precision = mean_average_precision(
+            pred_boxes, target_boxes, iou_threshold=0.5, box_format='midpoint'
+        )
+        
+        print(f"Train mAP: {mean_avg_precision}")
+
+        train_fn(train_loader, model, optimizer, loss_fn)
+
+if __name__ == "__main__":
+    main()
