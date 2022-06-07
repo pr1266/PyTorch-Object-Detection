@@ -75,5 +75,3 @@ class YoloLoss(nn.Module):
         )
 
         return loss
-
-
