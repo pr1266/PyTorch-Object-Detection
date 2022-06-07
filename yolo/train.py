@@ -1,3 +1,4 @@
+from cProfile import label
 from pyrsistent import T
 import torch
 import torch.optim as optim
@@ -61,3 +62,28 @@ def train_fn(train_loader, model, optimizer, loss_fn):
 
         #! inja progress bar ro update mikonim:
         loop.set_postfix(loss=loss.item())
+    print(f"Mean Loss : {sum(mean_loss)/len(mean_loss)}")
+
+
+def main():
+
+    model = Yolov1(split_size=7, num_boxes=2, num_classes=20).to(DEVICE)
+    optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
+    loss_fn = YoloLoss()
+    if LOAD_MODEL:
+        load_checkpoint(torch.load(LOAD_MODEL_FILE), model, optimizer)
+    
+    #! dataset ro dorost konim:
+    train_dataset = VOCDataset(
+        'data/8examples.csv',
+        transform=transforms,
+        img_dir=IMG_DIR,
+        label_dir=LABEL_DIR
+    )
+
+    test_dataset = VOCDataset(
+        'data/test.csv',
+        transform=transforms,
+        img_dir=IMG_DIR,
+        label_dir=LABEL_DIR
+    )
