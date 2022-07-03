@@ -66,3 +66,46 @@ class ViolaJones:
                 weights[x] = 1.0 / (2 * pos_num)
             else:
                 weights[x] = 1.0 / (2 * neg_num)
+        features = self.build_features(training_data[0][0].shape)
+
+
+    def build_features(self, image_shape):
+
+        #! inja miaim hame oon 2,3,4-rectangle feature haro extract mikonim:
+        #! saat 4 sobe va cop zadam injasho mese maaaaaaard
+        #! mige element aval mishe positive element dovom mishe negative:
+        height, width = image_shape
+        features = []
+        for w in range(1, width+1):
+            for h in range(1, height+1):
+                i = 0
+                while i + w < width:
+                    j = 0
+                    while j + h < height:
+                        #!2 rectangle features
+                        immediate = RectangleRegion(i, j, w, h)
+                        right = RectangleRegion(i+w, j, w, h)
+                        if i + 2 * w < width: #!Horizontally Adjacent
+                            features.append(([right], [immediate]))
+
+                        bottom = RectangleRegion(i, j+h, w, h)
+                        if j + 2 * h < height: #!Vertically Adjacent
+                            features.append(([immediate], [bottom]))
+                        
+                        right_2 = RectangleRegion(i+2*w, j, w, h)
+                        #!3 rectangle features
+                        if i + 3 * w < width: #!Horizontally Adjacent
+                            features.append(([right], [right_2, immediate]))
+
+                        bottom_2 = RectangleRegion(i, j+2*h, w, h)
+                        if j + 3 * h < height: #!Vertically Adjacent
+                            features.append(([bottom], [bottom_2, immediate]))
+
+                        #!4 rectangle features
+                        bottom_right = RectangleRegion(i+w, j+h, w, h)
+                        if i + 2 * w < width and j + 2 * h < height:
+                            features.append(([right, bottom], [immediate, bottom_right]))
+
+                        j += 1
+                    i += 1
+        return np.array(features)
