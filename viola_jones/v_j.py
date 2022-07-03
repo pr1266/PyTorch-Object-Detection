@@ -91,6 +91,63 @@ class ViolaJones:
         features = self.build_features(training_data[0][0].shape)
         X, y = self.apply_features(features, training_data)
 
+    def train_weak(self, X, y, features, weights):
+        #! x ke hamoon feature han y ham label hashe (p ya n)
+        #! features hamoon [[sum(pos)], [sum(neg)]] e
+        #! w ham ke weight haye assign shode be har training sample e
+        
+        total_pos, total_neg = 0, 0
+        for w, label in zip(weights, y):
+            if label == 1:
+                total_pos += w
+            else:
+                total_neg += w
+
+        classifiers = []
+        total_features = X.shape[0]
+        for index, feature in enumerate(X):
+            if len(classifiers) % 1000 == 0 and len(classifiers) != 0:
+                print("Trained %d classifiers out of %d" % (len(classifiers), total_features))
+
+            applied_feature = sorted(zip(weights, feature, y), key=lambda x: x[1])
+
+            pos_seen, neg_seen = 0, 0
+            pos_weights, neg_weights = 0, 0
+            min_error, best_feature, best_threshold, best_polarity = float('inf'), None, None, None
+            for w, f, label in applied_feature:
+                error = min(neg_weights + total_pos - pos_weights, pos_weights + total_neg - neg_weights)
+                if error < min_error:
+                    min_error = error
+                    best_feature = features[index]
+                    best_threshold = f
+                    best_polarity = 1 if pos_seen > neg_seen else -1
+
+                if label == 1:
+                    pos_seen += 1
+                    pos_weights += w
+                else:
+                    neg_seen += 1
+                    neg_weights += w
+            
+            clf = WeakClassifier(best_feature[0], best_feature[1], best_threshold, best_polarity)
+            classifiers.append(clf)
+        return classifiers
+
+    def select_best(self, classifiers, weights, training_data):
+        #! in daiimoonam ke ye array az weak classifier ha migire
+        #! miad behtarinesh ro bar migardoone:
+        best_clf, best_error, best_accuracy = None, float('inf'), None
+        for clf in classifiers:
+            error, accuracy = 0, []
+            for data, w in zip(training_data, weights):
+                correctness = abs(clf.classify(data[0]) - data[1])
+                accuracy.append(correctness)
+                error += w * correctness
+            error = error / len(training_data)
+            if error < best_error:
+                best_clf, best_error, best_accuracy = clf, error, accuracy
+        return best_clf, best_error, best_accuracy
+
     def build_features(self, image_shape):
 
         #! inja miaim hame oon 2,3,4-rectangle feature haro extract mikonim:
