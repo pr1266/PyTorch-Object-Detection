@@ -41,6 +41,28 @@ class RectangleRegion:
     def compute_feature(self, ii):
         return ii[self.y+self.height][self.x+self.width] + ii[self.y][self.x] - (ii[self.y+self.height][self.x]+ii[self.y][self.x+self.width])
 
+
+class WeakClassifier:
+    def __init__(self, positive_regions, negative_regions, threshold, polarity):
+    #! agha too classifier 2 ta parameter darim:
+        """
+        polarity va threshold baraye weak Classifier ke
+        ye khorooji h(x, f, p, t) bayad hesab konim
+        h = 1 if age p f(x) < p th else 0
+        agha baad in th va p baiad ba train optimal shan
+        yani hamintori alaki nist ye constant bezarim
+        """
+        self.positive_regions = positive_regions
+        self.negative_regions = negative_regions
+        self.threshold = threshold
+        self.polarity = polarity
+    
+    def classify(self, x):
+        
+        feature = lambda ii: sum([pos.compute_feature(ii) for pos in self.positive_regions]) - sum([neg.compute_feature(ii) for neg in self.negative_regions])
+        return 1 if self.polarity * feature(x) < self.polarity * self.threshold else 0
+    
+
 #! khob class Viola-Jones asl karie
 #! tanha hyper parameter ghabel e tanzim, hamin tedad weak classifier hast
 #! idea chie? T ta weak classifier darim harkodoom ye bakhsh(region) az tasvir ro migire
@@ -67,7 +89,7 @@ class ViolaJones:
             else:
                 weights[x] = 1.0 / (2 * neg_num)
         features = self.build_features(training_data[0][0].shape)
-
+        X, y = self.apply_features(features, training_data)
 
     def build_features(self, image_shape):
 
@@ -109,3 +131,24 @@ class ViolaJones:
                         j += 1
                     i += 1
         return np.array(features)
+
+    def apply_features(self, features, training_data):
+        #! in features hamoon e ke tuple e va element aval pos va element dovom neg e
+        #! training data ham ke havi integral image va label e
+        """
+        Maps features onto the training dataset
+          Args:
+            features: an array of tuples. Each tuple's first element is an array of the rectangle regions which positively contribute to the feature. The second element is an array of rectangle regions negatively contributing to the feature
+            training_data: An array of tuples. The first element is the numpy array of shape (m, n) representing the integral image. The second element is its classification (1 or 0)
+          Returns:
+            X: A numpy array of shape (len(features), len(training_data)). Each row represents the value of a single feature for each training example
+            y: A numpy array of shape len(training_data). The ith element is the classification of the ith training example
+        """
+        X = np.zeros((len(features), len(training_data)))
+        y = np.array(list(map(lambda data: data[1], training_data)))
+        i = 0
+        for positive_regions, negative_regions in features:
+            feature = lambda ii: sum([pos.compute_feature(ii) for pos in positive_regions]) - sum([neg.compute_feature(ii) for neg in negative_regions])
+            X[i] = list(map(lambda data: feature(data[0]), training_data))
+            i += 1
+        return X, y
