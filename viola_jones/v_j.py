@@ -90,7 +90,21 @@ class ViolaJones:
                 weights[x] = 1.0 / (2 * neg_num)
         features = self.build_features(training_data[0][0].shape)
         X, y = self.apply_features(features, training_data)
-
+        indices = SelectPercentile(f_classif, percentile=10).fit(X.T, y).get_support(indices=True)
+        X = X[indices]
+        features = features[indices]
+        for t in range(self.T):
+            weights = weights / np.linalg.norm(weights)
+            weak_classifiers = self.train_weak(X, y, features, weights)
+            clf, error, accuracy = self.select_best(weak_classifiers, weights, training_data)
+            beta = error / (1.0 - error)
+            for i in range(len(accuracy)):
+                weights[i] = weights[i] * (beta ** (1 - accuracy[i]))
+            alpha = math.log(1.0/beta)
+            self.alphas.append(alpha)
+            self.clfs.append(clf)
+            print("Chosen classifier: %s with accuracy: %f and alpha: %f" % (str(clf), len(accuracy) - sum(accuracy), alpha))
+    
     def train_weak(self, X, y, features, weights):
         #! x ke hamoon feature han y ham label hashe (p ya n)
         #! features hamoon [[sum(pos)], [sum(neg)]] e
@@ -209,3 +223,12 @@ class ViolaJones:
             X[i] = list(map(lambda data: feature(data[0]), training_data))
             i += 1
         return X, y
+
+    def classify(self, image):
+        total = 0
+        ii = integral_image(image)
+        for alpha, clf in zip(self.alphas, self.clfs):
+            total += alpha * clf.classify(ii)
+        return 1 if total >= 0.5 * sum(self.alphas) else 0
+
+#! too be continue...
